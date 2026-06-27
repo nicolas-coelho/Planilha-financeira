@@ -13,16 +13,18 @@ def get_engine():
 
 engine = get_engine()
 
-# 2. Autenticação Nativa do Streamlit Cloud
-# O Streamlit Cloud já injeta o e-mail do usuário logado no objeto st.user
+# 2. Login e Autenticação (Diagnóstico Total)
 user = st.user
 
-if not user or not user.get("email"):
-    st.error("Acesso negado: Você precisa estar logado na plataforma para acessar este dashboard.")
+if not user:
+    st.error("ERRO: O objeto 'user' é None. O Streamlit Cloud não está injetando a sessão.")
     st.stop()
-
-user_email = user["email"]
-st.title(f"💰 Gestão Financeira: {user_email}")
+elif not user.get("email"):
+    st.write("O objeto 'user' chegou, mas está vazio ou sem e-mail:", user)
+    st.stop()
+else:
+    user_email = user["email"]
+    st.title(f"💰 Gestão Financeira: {user_email}")
 
 # 3. Funções de Banco de Dados (Seguras contra SQL Injection)
 def carregar_dados():
