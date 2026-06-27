@@ -9,16 +9,19 @@ def get_engine():
 
 engine = get_engine()
 
-# --- AUTENTICAÇÃO SIMPLIFICADA ---
+# --- AUTENTICAÇÃO FORÇADA ---
 user = st.user
 
-# Se o Streamlit Cloud não encontrar o e-mail, ele nem deveria chegar aqui.
-# Mas, para segurança extra, fazemos uma checagem simples:
-if not user or not user.get("email"):
-    st.error("Erro: Você precisa estar logado na plataforma para acessar este dashboard.")
+# Verificação ajustada
+user_email = user.get("email")
+
+if not user_email:
+    # Em vez de parar o app, vamos tentar exibir o que o objeto user tem
+    # Isso nos ajudará a entender se o problema é o nome da chave
+    st.write("Debug: Informações do usuário detectadas:", user)
+    st.warning("O e-mail não foi detectado automaticamente. Verifique se você está logado no Streamlit Cloud.")
     st.stop()
 
-user_email = user["email"]
 st.title(f"💰 Gestão Financeira: {user_email}")
 
 # 3. Funções de Banco de Dados (Seguras contra SQL Injection)
