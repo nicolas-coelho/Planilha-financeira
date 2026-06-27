@@ -16,11 +16,12 @@ engine = get_engine()
 user = st.user
 
 # Verifica se o Streamlit já carregou as informações do usuário
-if user is None or not user.email:
+# Usamos o acesso por chave ["email"] e verificamos se o dicionário não está vazio
+if not user or "email" not in user or not user["email"]:
     st.info("Autenticando... por favor, aguarde.")
-    st.rerun() # Recarrega até que o e-mail esteja disponível
+    st.rerun() 
 
-user_email = user.email
+user_email = user["email"]
 st.title(f"💰 Gestão Financeira: {user_email}")
 
 # 3. Funções de Banco de Dados (Seguras contra SQL Injection)
