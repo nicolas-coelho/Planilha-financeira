@@ -2,30 +2,33 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-# 1. Conexão Segura
+# Configuração da página
+st.set_page_config(page_title="Finanças Pro", layout="wide")
+
+# 1. Conexão Segura com o Supabase
 @st.cache_resource
 def get_engine():
-    # A URL está no secrets do Streamlit Cloud
     return create_engine(st.secrets["DATABASE_URL"])
 
 engine = get_engine()
 
-# 2. Autenticação (Acesso Privado)
+# 2. Login e Autenticação (Integrado ao Streamlit Cloud)
 user = st.user
-if "email" not in user:
-    st.error("Acesso não autorizado.")
-    st.stop()
 
-user_email = user["email"]
+# Verifica se o Streamlit já carregou as informações do usuário
+if user is None or not user.email:
+    st.info("Autenticando... por favor, aguarde.")
+    st.rerun() # Recarrega até que o e-mail esteja disponível
 
-# 3. Query Segura (Sem concatenação de string)
+user_email = user.email
+st.title(f"💰 Gestão Financeira: {user_email}")
+
+# 3. Funções de Banco de Dados (Seguras contra SQL Injection)
 def carregar_dados():
     query = text("SELECT * FROM transacoes WHERE user_email = :email")
     with engine.connect() as conn:
-        # Passar o e-mail como parâmetro protege contra SQL Injection
         return pd.read_sql(query, conn, params={"email": user_email})
 
-# 4. Inserção Segura
 def salvar_transacao(data, valor, descricao, categoria):
     query = text("""
         INSERT INTO transacoes (data, valor, descricao, categoria, user_email) 
@@ -37,3 +40,27 @@ def salvar_transacao(data, valor, descricao, categoria):
             "cat": categoria, "email": user_email
         })
         conn.commit()
+
+# 4. Interface do Dashboard
+df = carregar_dados()
+
+if not df.empty:
+    st.dataframe(df)
+    
+    # Exemplo de lógica 60/30/10
+    total_renda = df[df['valor'] > 0]['valor'].sum()
+    st.metric("Renda Total Registrada", f"R$ {total_renda:,.2f}")
+else:
+    st.write("Nenhuma transação encontrada para este usuário.")
+
+# Upload de novos dados (opcional)
+st.sidebar.subheader("Nova Transação")
+with st.sidebar.form("nova_transacao"):
+    data = st.date_input("Data")
+    valor = st.number_input("Valor", step=0.01)
+    desc = st.text_input("Descrição")
+    cat = st.selectbox("Categoria", ["Essenciais", "Estilo de Vida", "Investimentos"])
+    if st.form_submit_button("Salvar"):
+        salvar_transacao(data, valor, desc, cat)
+        st.success("Salvo!")
+        st.rerun()
