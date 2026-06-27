@@ -2,24 +2,21 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-# Configuração da página
-st.set_page_config(page_title="Finanças Pro", layout="wide")
-
-# 1. Conexão Segura com o Supabase
+# Conexão (mantém como estava)
 @st.cache_resource
 def get_engine():
     return create_engine(st.secrets["DATABASE_URL"])
 
 engine = get_engine()
 
-# 2. Login e Autenticação (Integrado ao Streamlit Cloud)
+# --- AUTENTICAÇÃO SIMPLIFICADA ---
 user = st.user
 
-# Verifica se o Streamlit já carregou as informações do usuário
-# Usamos o acesso por chave ["email"] e verificamos se o dicionário não está vazio
-if not user or "email" not in user or not user["email"]:
-    st.info("Autenticando... por favor, aguarde.")
-    st.rerun() 
+# Se o Streamlit Cloud não encontrar o e-mail, ele nem deveria chegar aqui.
+# Mas, para segurança extra, fazemos uma checagem simples:
+if not user or not user.get("email"):
+    st.error("Erro: Você precisa estar logado na plataforma para acessar este dashboard.")
+    st.stop()
 
 user_email = user["email"]
 st.title(f"💰 Gestão Financeira: {user_email}")
